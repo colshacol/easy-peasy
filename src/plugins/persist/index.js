@@ -1,6 +1,6 @@
 import debounce from 'debounce';
 import isPlainObject from 'is-plain-object';
-import { deepCloneStateWithoutComputed, get, isPromise, set } from '../../lib';
+import { deepCloneState, get, isPromise, set } from '../../lib';
 import { modelSymbol } from '../../constants';
 
 const noopStorage = {
@@ -120,7 +120,7 @@ function createPersistor(persistenceConfig, persistKey, references) {
     persistenceConfig.forEach(({ path, config }) => {
       const { storage, whitelist, blacklist } = config;
       const state = references.getState();
-      const persistRoot = deepCloneStateWithoutComputed(get(path, state));
+      const persistRoot = deepCloneState(get(path, state));
       const targets = resolvePersistTargets(persistRoot, whitelist, blacklist);
       targets.forEach(key => {
         const targetPath = [...path, key];
@@ -183,7 +183,7 @@ function rehydrateStateFromPersistIfNeeded(
       const { blacklist, mergeStrategy, storage, whitelist } = config;
 
       const state = references.internals.defaultState;
-      const persistRoot = deepCloneStateWithoutComputed(get(path, state));
+      const persistRoot = deepCloneState(get(path, state));
       const targets = resolvePersistTargets(persistRoot, whitelist, blacklist);
 
       const applyRehydrationStrategy = (originalState, rehydratedState) => {
@@ -299,7 +299,7 @@ function persistPlugin(config, references) {
       });
     },
     modelVisitor: (value, key, meta) => {
-      if (value[modelSymbol]) {
+      if (value != null && typeof value === 'object' && value[modelSymbol]) {
         const modelConfig = value[modelSymbol];
         if (modelConfig.persist) {
           persistenceConfig.push(
